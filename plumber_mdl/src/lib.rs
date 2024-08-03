@@ -162,9 +162,9 @@ impl Model {
 
 #[derive(Debug, Clone)]
 pub struct Verified<'a> {
-    mdl_header: mdl::HeaderRef<'a>,
-    vvd_header: vvd::HeaderRef<'a>,
-    vtx_header: vtx::HeaderRef<'a>,
+    pub mdl_header: mdl::HeaderRef<'a>,
+    pub vvd_header: vvd::HeaderRef<'a>,
+    pub vtx_header: vtx::HeaderRef<'a>,
 }
 
 impl<'a> Verified<'a> {
