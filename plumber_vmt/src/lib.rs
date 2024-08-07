@@ -561,6 +561,34 @@ impl Vmt {
         }
     }
 
+    /// Resolve the shader.
+    /// If this is a patch material, applies the patch.
+    /// Unlike `resolve_shader`, this will look for the patched file in the OS file system using the provided function instead of always looking in the game's file system.
+    ///
+    /// # Errors
+    ///
+    /// If this is a patch material,
+    /// returns `Err` if any of the included materials can't be found or parsed.
+    pub fn resolve_shader_os(
+        self,
+        file_system: &plumber_fs::OpenFileSystem,
+        mut find_patch_source: impl FnMut(&str) -> Result<std::path::PathBuf, ShaderResolveError>
+    ) -> Result<Shader, ShaderResolveError> {
+        match self.shader {
+            ShaderOrPatch::Shader(shader) => Ok(shader),
+            ShaderOrPatch::Patch(mut patch) => {
+                let patch_path = find_patch_source(&patch.include.as_str())?;
+                let base_contents = file_system
+                    .read(&patch_path)
+                    .map_err(|err| ShaderResolveError::from_io(&err, &patch.include))?;
+                let base_vmt = Self::from_bytes(&base_contents)?;
+                let mut base_shader = base_vmt.resolve_shader_os(file_system, find_patch_source)?;
+                base_shader.parameters.append(&mut patch.insert);
+                Ok(base_shader)
+            }
+        }
+    }
+
     /// Convert the material into the inner shader.
     /// Returns `None` if this is a patch material.
     #[must_use]
